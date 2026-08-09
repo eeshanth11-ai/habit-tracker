@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreakFlow - Habit Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #22c55e;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    button.add-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .habit-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .habit-card {
+      background: var(--card);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .habit-info h3 { font-size: 16px; margin-bottom: 4px; }
+    .habit-info p { font-size: 12px; color: var(--subtext); }
+
+    .habit-actions { display: flex; align-items: center; gap: 10px; }
+
+    .check-btn {
+      background: #334155;
+      color: var(--text);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .check-btn.completed {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    /* Ad Banner Container */
+    .ad-banner {
+      margin-top: 30px;
+      padding: 15px;
+      background: #111827;
+      border: 1px dashed #374151;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--subtext);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>StreakFlow</h1>
+    <span id="dateDisplay" style="font-size: 12px; color: var(--subtext);"></span>
+  </header>
+
+  <div class="input-group">
+    <input type="text" id="habitInput" placeholder="Add new habit (e.g., Read 10 mins)...">
+    <button class="add-btn" onclick="addHabit()">Add</button>
+  </div>
+
+  <div class="habit-list" id="habitList"></div>
+
+  <!-- Ad Banner Placeholder for Monetization -->
+  <div class="ad-banner" id="adSpace">
+    📢 <strong>Ad Banner Space</strong><br>
+    Paste Google AdSense script here once approved.
+  </div>
+
+  <script>
+    let habits = JSON.parse(localStorage.getItem('streakflow_habits')) || [];
+    const today = new Date().toISOString().split('T')[0];
+
+    document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    function saveHabits() {
+      localStorage.setItem('streakflow_habits', JSON.stringify(habits));
+      renderHabits();
+    }
+
+    function addHabit() {
+      const input = document.getElementById('habitInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      habits.push({
+        id: Date.now(),
+        name: text,
+        streak: 0,
+        lastCompleted: null
+      });
+
+      input.value = '';
+      saveHabits();
+    }
+
+    function toggleHabit(id) {
+      habits = habits.map(habit => {
+        if (habit.id === id) {
+          if (habit.lastCompleted === today) {
+            // Undo completion
+            habit.streak = Math.max(0, habit.streak - 1);
+            habit.lastCompleted = null;
+          } else {
+            // Complete habit
+            habit.streak += 1;
+            habit.lastCompleted = today;
+          }
+        }
+        return habit;
+      });
+      saveHabits();
+    }
+
+    function deleteHabit(id) {
+      habits = habits.filter(h => h.id !== id);
+      saveHabits();
+    }
+
+    function renderHabits() {
+      const list = document.getElementById('habitList');
+      list.innerHTML = '';
+
+      if (habits.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: var(--subtext); margin-top: 20px;">No habits added yet. Start above!</p>';
+        return;
+      }
+
+      habits.forEach(habit => {
+        const isDone = habit.lastCompleted === today;
+        const card = document.createElement('div');
+        card.className = 'habit-card';
+        card.innerHTML = `
+          <div class="habit-info">
+            <h3>${habit.name}</h3>
+            <p>🔥 ${habit.streak} day streak</p>
+          </div>
+          <div class="habit-actions">
+            <button class="check-btn ${isDone ? 'completed' : ''}" onclick="toggleHabit(${habit.id})">
+              ${isDone ? '✓' : ''}
+            </button>
+            <button class="delete-btn" onclick="deleteHabit(${habit.id})">✕</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    renderHabits();
+  </script>
+</body>
+</html>
