@@ -1,0 +1,16 @@
+{
+  "short_name": "StreakFlow",
+  "name": "StreakFlow Habit Tracker",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2583/2583161.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f172a",
+  "theme_color": "#22c55e",
+  "display": "standalone",
+  "orientation": "portrait"
+}
